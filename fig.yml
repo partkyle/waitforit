@@ -1,6 +1,6 @@
 build:
   image: golang:1.4.2-cross
-  working_dir: /app
+  working_dir: /go/src/github.com/partkyle/waitforit
   volumes:
-    - .:/app
+    - .:/go/src/github.com/partkyle/waitforit
   command: make build-all

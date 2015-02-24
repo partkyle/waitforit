@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 )
 
 var (
@@ -14,31 +13,50 @@ var (
 	debug   = flag.Bool("d", false, "log debug messages.")
 	verbose = flag.Bool("v", false, "Print subcommand output.")
 
+	addr = flag.String("addr", "", "Wait until an address is available")
+
 	version = flag.Bool("version", false, "Print version and exit.")
 )
 
+// version value that gets replaced by the compile process
 var VERSION = "I SUCK AT VERSIONING"
 
 func main() {
+	log.SetFlags(log.LstdFlags)
+
 	flag.Parse()
+
+	Debug := debugLog(*debug)
 
 	if *version {
 		fmt.Println(VERSION)
 		os.Exit(0)
 	}
 
-	Debug := debugLog(*debug)
+	var Exec Executor
 
-	Debug.Logf("Running Command: %s", flag.Args())
+	switch {
+	case *addr != "":
+		Exec = &AddrExecutor{
+			Debug: Debug,
+			Addr:  *addr,
+		}
+	default:
+		if len(flag.Args()) < 1 {
+			log.Fatal("Command is required!")
+		}
 
-	if len(flag.Args()) < 1 {
-		log.Fatal("Command is required!")
-	}
+		Path := flag.Args()[0]
+		var Args []string
+		if len(flag.Args()) > 1 {
+			Args = flag.Args()[1:len(flag.Args())]
+		}
 
-	Command := flag.Args()[0]
-	var Args []string
-	if len(flag.Args()) > 2 {
-		Args = flag.Args()[1:len(flag.Args())]
+		Exec = &CommandExecutor{
+			Path:  Path,
+			Args:  Args,
+			Debug: Debug,
+		}
 	}
 
 	// determine backoff strategy from flags
@@ -46,29 +64,15 @@ func main() {
 
 	var LastErr error = nil
 	for i := 1; i < *n+1; i++ {
-		Exec := exec.Command(Command, Args...)
-
-		if *verbose {
-			Exec.Stdout = os.Stdout
-			Exec.Stderr = os.Stderr
-		}
-
-		Debug.Logf("Running %s %s", Exec.Path, Exec.Args)
-
 		LastErr = Exec.Run()
-		Debug.Logf("state: %v, %v", Exec.ProcessState, LastErr)
-
 		if LastErr == nil {
-			// This is the successful case.
-			// We are done.
 			break
 		}
 
-		// we don't want log collusion with this
-		// but this is a useful output for most cases
 		if !*debug {
 			fmt.Printf(".")
 		}
+
 		Strategy(Debug, i)
 	}
 
@@ -76,5 +80,5 @@ func main() {
 		log.Fatal(LastErr)
 	}
 
-	Debug.Logf("exiting normally")
+	Debug.Logf("READY")
 }

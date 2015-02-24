@@ -6,7 +6,10 @@ LDFLAGS = -ldflags "-X main.VERSION $(VERSION)"
 all:
 	fig build
 	fig pull
-	fig run --rm build make build-all
+	fig run --rm build make test build-all
+
+test:
+	go test ./...
 
 build-all: build/waitforit-darwin-amd64 build/waitforit-linux-amd64
 
