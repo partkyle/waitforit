@@ -1,0 +1,6 @@
+build:
+  image: golang:1.4.2-cross
+  working_dir: /app
+  volumes:
+    - .:/app
+  command: make build-all
