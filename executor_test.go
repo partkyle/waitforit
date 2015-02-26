@@ -40,7 +40,7 @@ func TestAddrHttpUnavailable(t *testing.T) {
 	}
 }
 
-func TestAddrHttp404(t *testing.T) {
+func TestHttp404(t *testing.T) {
 	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
 		t.Fatal(err)
@@ -48,14 +48,14 @@ func TestAddrHttp404(t *testing.T) {
 	go http.Serve(listener, nil)
 	defer listener.Close()
 
-	Exec := &waitforit.AddrExecutor{Addr: fmt.Sprintf("http://%s", listener.Addr().String())}
+	Exec := &waitforit.HTTPExecutor{URL: fmt.Sprintf("http://%s", listener.Addr().String())}
 
 	if err = Exec.Run(); err == nil {
 		t.Error("expected http test to fail when server responds non 2xx")
 	}
 }
 
-func TestAddrHttpEventually2xx(t *testing.T) {
+func TestHttpEventually2xx(t *testing.T) {
 	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
 		t.Fatal(err)
@@ -74,7 +74,7 @@ func TestAddrHttpEventually2xx(t *testing.T) {
 	go http.Serve(listener, http.HandlerFunc(Handler))
 	defer listener.Close()
 
-	Exec := &waitforit.AddrExecutor{Addr: fmt.Sprintf("http://%s", listener.Addr().String())}
+	Exec := &waitforit.HTTPExecutor{URL: fmt.Sprintf("http://%s", listener.Addr().String())}
 
 	if err = Exec.Run(); err == nil {
 		t.Error("expected http test to fail when server responds non 2xx")
@@ -108,7 +108,7 @@ func TestAddrTCPBecomesAvailable(t *testing.T) {
 
 	listener.Close()
 
-	Exec := &waitforit.AddrExecutor{Addr: fmt.Sprintf("tcp://%s", listener.Addr().String())}
+	Exec := &waitforit.AddrExecutor{Addr: listener.Addr().String()}
 
 	if err := Exec.Run(); err == nil {
 		t.Error("Expected the AddrExecutor to fail.")

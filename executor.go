@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 )
@@ -19,54 +18,52 @@ type AddrExecutor struct {
 }
 
 func (a *AddrExecutor) Run() error {
-	url, err := url.Parse(a.Addr)
+	conn, err := net.Dial("tcp", a.Addr)
 	if err != nil {
+		a.Debug.Logf("dial: %s", err)
 		return err
 	}
 
-	a.Debug.Logf("scheme: %s host: %s", url.Scheme, url.Host)
+	if err := conn.Close(); err != nil {
+		a.Debug.Logf("close: %s", err)
+		return err
+	}
 
-	switch url.Scheme {
-	case "http":
-		response, err := http.Get(url.String())
-		if err != nil {
-			a.Debug.Logf("http.Get: %s", err)
-			return err
-		}
+	return nil
+}
 
-		if (response.StatusCode / 200) != 1 {
-			err := fmt.Errorf("expected 2xx status: %d", response.StatusCode)
-			a.Debug.Logf("status: %s", err)
-			return err
-		}
-	case "tcp":
-		conn, err := net.Dial(url.Scheme, url.Host)
-		if err != nil {
-			a.Debug.Logf("dial: %s", err)
-			return err
-		}
+type HTTPExecutor struct {
+	Debug debugLog
+	URL   string
+}
 
-		if err := conn.Close(); err != nil {
-			a.Debug.Logf("close: %s", err)
-			return err
-		}
-	default:
-		return fmt.Errorf("invalid scheme: %s", url.Scheme)
+func (h *HTTPExecutor) Run() error {
+	response, err := http.Get(h.URL)
+	if err != nil {
+		h.Debug.Logf("http.Get: %s", err)
+		return err
+	}
+
+	if (response.StatusCode / 200) != 1 {
+		err := fmt.Errorf("expected 2xx status: %d", response.StatusCode)
+		h.Debug.Logf("status: %s", err)
+		return err
 	}
 
 	return nil
 }
 
 type CommandExecutor struct {
-	Debug debugLog
-	Path  string
-	Args  []string
+	Debug   debugLog
+	Path    string
+	Args    []string
+	Verbose bool
 }
 
 func (c *CommandExecutor) Run() error {
 	Exec := exec.Command(c.Path, c.Args...)
 
-	if *verbose {
+	if c.Verbose {
 		Exec.Stdout = os.Stdout
 		Exec.Stderr = os.Stderr
 	}
