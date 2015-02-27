@@ -11,7 +11,7 @@ It is meant for applicaitons that require services to be available before they c
 Waits until a command returns a 0 exit status.
 
 ```
-waitforit -c "curl www.google.com"
+waitforit -cmd "curl www.google.com"
 ```
 
 ### Addr
