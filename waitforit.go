@@ -19,7 +19,7 @@ type Config struct {
 }
 
 // version value that gets replaced by the compile process
-var VERSION = "I SUCK AT VERSIONING"
+var VERSION = "UNSET"
 
 func main() {
 	log.SetFlags(log.LstdFlags)
